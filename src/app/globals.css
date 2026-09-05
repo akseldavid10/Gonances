@@ -1,1 +1,161 @@
 @import "tailwindcss";
+
+/* ── Gonances · sistema "Libro de cuentas" ──────────────────────────────
+   El papel es la hoja contable (green-bar), la tinta es verde-negra y las
+   cifras se graban como en un billete. Nada se separa con sombra: todo se
+   separa con un filete de 1px o con la banda del renglón.
+
+   El tema oscuro es el mismo libro a la luz de una lámpara: el papel se
+   vuelve verde-negro y la tinta, blanco cálido. Los roles no cambian, solo
+   sus valores, así que las utilidades semánticas (bg-paper, text-ink,
+   border-rule) siguen siendo correctas en los dos temas.
+
+   `data-theme` en <html> siempre vale "light" u "oscuro" ya resuelto: la
+   preferencia "system" la resuelve el script de theme-provider antes del
+   primer pintado, para que aquí baste un único bloque oscuro.        */
+
+/* Los tokens cubren casi todo el sistema, pero algunos elementos necesitan
+   cambiar de forma (no de color) según el tema: por ejemplo el icono del
+   conmutador. Esta variante lo permite sin depender de estado de React, así
+   que también es correcta antes de que hidrate el JS. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  /* Superficies */
+  --color-paper: #e7eadf; /* hoja contable, fondo de página */
+  --color-sheet: #f7f8f2; /* hoja limpia, superficies elevadas */
+  --color-band: #dce2ce; /* banda del renglón par */
+  --color-rule: #c3cbb4; /* filete impreso */
+  --color-rule-soft: #d6dcc8;
+
+  /* Tinta */
+  --color-ink: #1a2a22; /* texto principal */
+  --color-ink-soft: #46564c; /* texto secundario */
+  --color-ink-faint: #6d7c72; /* metadatos */
+  --color-ink-deep: #16241d; /* tinta más cargada: hover del botón primario */
+
+  /* Panel invertido: la contracubierta oscura del libro (menú lateral,
+     toast). Es oscura en los dos temas, así que lleva su propia tinta. */
+  --color-inverse: #16241d;
+  --color-inverse-ink: #e7eadf;
+  --color-inverse-income: #cfe0d3;
+  --color-inverse-expense: #ecd2d4;
+
+  /* Velo de los diálogos y del menú móvil. */
+  --color-scrim: #16241d;
+
+  /* Semántica del dinero */
+  --color-income: #1f6b4a;
+  --color-income-tint: #cfe0d3;
+  --color-expense: #b32c3f;
+  --color-expense-tint: #ecd2d4;
+
+  /* Series de gráfico: validadas para daltonismo sobre la hoja #f7f8f2.
+     Las de texto (income/expense) llevan más contraste; estas, más croma.
+     Recharts pinta atributos SVG, donde var() no resuelve: los mismos
+     valores viven en lib/chart-colors.ts y deben cambiarse a la vez. */
+  --color-chart-income: #2f8f63;
+  --color-chart-expense: #a32438;
+  --color-chart-other: #6d7c72;
+
+  --font-display: var(--font-bodoni), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-*: initial;
+  --radius-sm: 2px;
+  --radius: 4px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+
+    /* El chevron del <select> vive en un data-URI, donde var() no resuelve:
+       lo que cambia con el tema es la imagen entera, no su color. */
+    --select-chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5 6 6.5 11 1.5' stroke='%236d7c72' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  }
+
+  /* El libro a la luz de una lámpara. Contrastes verificados: tinta 12.8:1
+     sobre la hoja, tinta tenue 5.2:1, dinero 6:1 o más. */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --color-paper: #131a15;
+    --color-sheet: #1b241d;
+    --color-band: #222d24;
+    --color-rule: #3a4a3d;
+    --color-rule-soft: #2b372d;
+
+    --color-ink: #e4e8dc;
+    --color-ink-soft: #b0bbaa;
+    --color-ink-faint: #8b978a;
+    /* Con la tinta clara, "más cargada" significa más brillante. */
+    --color-ink-deep: #f2f5ec;
+
+    --color-inverse: #202a22;
+    --color-inverse-ink: #e4e8dc;
+    --color-inverse-income: #a8dcc0;
+    --color-inverse-expense: #f3b6bf;
+
+    --color-scrim: #050806;
+
+    --color-income: #5cbf90;
+    --color-income-tint: #1e3a2b;
+    --color-expense: #ef7f8f;
+    --color-expense-tint: #43222a;
+
+    --color-chart-income: #4fb984;
+    --color-chart-expense: #e0596f;
+    --color-chart-other: #8b978a;
+
+    --select-chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5 6 6.5 11 1.5' stroke='%238b978a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Foco visible y consistente en todo el producto. */
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--color-income-tint);
+  }
+}
+
+@utility num {
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.01em;
+}
+
+/* La cifra grabada: Didone, apretada, como la denominación de un billete. */
+@utility engraved {
+  font-family: var(--font-display);
+  font-variant-numeric: lining-nums;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* Quien pide menos movimiento no ve ninguno: la regla tiene que ganarle a
+   las utilidades de Tailwind, y para eso hace falta !important. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: preferencia del sistema */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: preferencia del sistema */
+    animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: preferencia del sistema */
+    transition-duration: 0.01ms !important;
+  }
+}
